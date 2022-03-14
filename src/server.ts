@@ -1,15 +1,16 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import bodyParser from 'body-parser';
-import {filterImageFromURL, deleteLocalFiles} from './util/util';
+import { isEmpty } from 'lodash';
+
+import { filterImageFromURL, deleteLocalFiles } from './util/util';
 
 (async () => {
-
   // Init the Express application
   const app = express();
 
   // Set the network port
   const port = process.env.PORT || 8082;
-  
+
   // Use the body parser middleware for post requests
   app.use(bodyParser.json());
 
@@ -29,18 +30,36 @@ import {filterImageFromURL, deleteLocalFiles} from './util/util';
 
   /**************************************************************************** */
 
+  app.get(
+    '/filteredimage',
+    async (req: Request<{}, {}, {}, { image_url: string }>, res: Response) => {
+      const { image_url: imageUrl } = req.query;
+
+      if (isEmpty(imageUrl)) {
+        res.status(400).json({
+          message: 'please provide a non-empty image_url as query parameter',
+        });
+      }
+
+      const filteredImagePath = await filterImageFromURL(imageUrl);
+
+      res.sendFile(filteredImagePath, () => {
+        deleteLocalFiles([filteredImagePath]);
+      });
+    },
+  );
+
   //! END @TODO1
-  
+
   // Root Endpoint
   // Displays a simple message to the user
-  app.get( "/", async ( req, res ) => {
-    res.send("try GET /filteredimage?image_url={{}}")
-  } );
-  
+  app.get('/', async (req, res) => {
+    res.send('try GET /filteredimage?image_url={{}}');
+  });
 
   // Start the Server
-  app.listen( port, () => {
-      console.log( `server running http://localhost:${ port }` );
-      console.log( `press CTRL+C to stop server` );
-  } );
+  app.listen(port, () => {
+    console.log(`server running http://localhost:${port}`);
+    console.log(`press CTRL+C to stop server`);
+  });
 })();
