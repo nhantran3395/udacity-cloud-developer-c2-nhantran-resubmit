@@ -1,4 +1,4 @@
-import express, { Request, Response } from 'express';
+import express from 'express';
 import bodyParser from 'body-parser';
 import { isEmpty } from 'lodash';
 
@@ -30,24 +30,21 @@ import { filterImageFromURL, deleteLocalFiles } from './util/util';
 
   /**************************************************************************** */
 
-  app.get(
-    '/filteredimage',
-    async (req: Request<{}, {}, {}, { image_url: string }>, res: Response) => {
-      const { image_url: imageUrl } = req.query;
+  app.get('/filteredimage', async (req, res) => {
+    const { image_url: imageUrl } = req.query;
 
-      if (isEmpty(imageUrl)) {
-        res.status(400).json({
-          message: 'please provide a non-empty image_url as query parameter',
-        });
-      }
-
-      const filteredImagePath = await filterImageFromURL(imageUrl);
-
-      res.sendFile(filteredImagePath, () => {
-        deleteLocalFiles([filteredImagePath]);
+    if (isEmpty(imageUrl)) {
+      res.status(400).json({
+        message: 'please provide a non-empty image_url as query parameter',
       });
-    },
-  );
+    }
+
+    const filteredImagePath = await filterImageFromURL(imageUrl);
+
+    res.sendFile(filteredImagePath, () => {
+      deleteLocalFiles([filteredImagePath]);
+    });
+  });
 
   //! END @TODO1
 
